@@ -16,7 +16,8 @@ import ld.ldhomework.crawler.Crawler;
  */
 public class Main {
 	public static void main(String[] args) {
-		Crawler crawler = new Crawler();
+		Crawler crawler = new Crawler(
+				"http://www.w3.org/People/Berners-Lee/card.rdf");
 		crawler.crawl();
 	}
 }

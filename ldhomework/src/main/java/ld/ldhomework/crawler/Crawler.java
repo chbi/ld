@@ -2,20 +2,28 @@ package ld.ldhomework.crawler;
 
 import java.util.logging.Logger;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.impl.InfModelImpl;
+
 public class Crawler {
 
 	private int searchDepth;
+	private String startUrl;
 	
 	private static final int DEFAULT_SEARCH_DEPTH = 2;
 	
 	private static final Logger LOG = java.util.logging.Logger.getLogger(Crawler.class.getName());
 	
-	public Crawler() {
-		this(DEFAULT_SEARCH_DEPTH);
+	private Model model;
+	
+	public Crawler(String startUrl) {
+		this(DEFAULT_SEARCH_DEPTH, startUrl);
+		// Todo model = 
 	}
 	
-	public Crawler(int searchDepth) {
+	public Crawler(int searchDepth, String startUrl) {
 		this.searchDepth = searchDepth;
+		this.startUrl = startUrl;
 	}
 	
 	public void crawl() {
@@ -23,6 +31,12 @@ public class Crawler {
 		for (int i = 0; i < searchDepth; i++) {
 			LOG.info("SEARCH" + i);
 		}
+		
+		LOG.info("startUrl = " + startUrl);
+		
+		model.read(startUrl);
+		
+		// System.out.println(model.toString());
 		
 //		input: Seed set S
 //		queue Frontier : = co ( S )
