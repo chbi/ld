@@ -18,7 +18,7 @@ public class Crawler {
 	
 	public Crawler(String startUrl) {
 		this(DEFAULT_SEARCH_DEPTH, startUrl);
-		// Todo model = 
+		// Todo: model = 
 	}
 	
 	public Crawler(int searchDepth, String startUrl) {
