@@ -1,8 +1,18 @@
 package ld.ldhomework.crawler;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.ParseException;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -12,6 +22,9 @@ public class Crawler {
     private String startUrl;
 
     private static final int DEFAULT_SEARCH_DEPTH = 2;
+
+    // download only documents of maximum 10MB length
+    private static final int MAXIMUM_DOCUMENT_LENGTH = 10485760;
 
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(Crawler.class.getName());
@@ -54,6 +67,7 @@ public class Crawler {
 		// only fetch this URI if it hasn't already been fetched
 		if (alreadyHandledURIs.add(currentURI)) {
 		    // TODO: FETCH document
+		    String responseString = fetchDocument(currentURI);
 		    // TODO: error handling for document fetching
 		    // TODO: parse document
 		    // TODO: error handling for document parsing
@@ -81,6 +95,59 @@ public class Crawler {
 	// add Links − Visited to Frontier
 
 	return;
+    }
+
+    // TODO: HTTP status handling...
+    // TODO: throw exception if unrecoverable error
+    private String fetchDocument(String currentURI) {
+	String result = null;
+	CloseableHttpClient httpclient = HttpClients.createDefault();
+	HttpGet httpget = new HttpGet(currentURI);
+	CloseableHttpResponse response = null;
+	try {
+	    response = httpclient.execute(httpget);
+
+	    /*
+	     * Check the status code. 200 OK means we got the document.
+	     * Everything else needs to be handled, though the standard
+	     * HTTPClient Strategy includes automatic redirect handling
+	     * (probably following infinite redirects).
+	     */
+	    StatusLine statusLine = response.getStatusLine();
+	    int responseStatusCode = statusLine.getStatusCode();
+
+	    if (responseStatusCode < 200 || responseStatusCode > 299) {
+		// TODO: throw exception, we did not get the document
+	    }
+
+
+	    HttpEntity entity = response.getEntity();
+	    if (entity != null) {
+		long len = entity.getContentLength();
+
+		if (len > 0 && len < MAXIMUM_DOCUMENT_LENGTH) {
+		    result = EntityUtils.toString(entity);
+		} else {
+		    // Stream content out
+		}
+	    }
+	} catch (ParseException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} finally {
+	    if (response != null) {
+		try {
+		    response.close();
+		} catch (IOException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		}
+	    }
+	}
+	return result;
     }
 
 }
