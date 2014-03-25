@@ -15,7 +15,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import com.hp.hpl.jena.rdf.model.Model;
 
 public class Crawler {
 
@@ -35,8 +34,6 @@ public class Crawler {
     private LinkedBlockingQueue<String> currentUriQueue = null;
     private LinkedBlockingQueue<String> nextUriQueue = null;
     HashSet<String> alreadyHandledURIs = null;
-
-    private Model model;
 
     public Crawler(String startUrl) {
 	this(DEFAULT_SEARCH_DEPTH, startUrl);
