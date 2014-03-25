@@ -58,7 +58,7 @@ public class Crawler {
 	nextUriQueue = new LinkedBlockingQueue<String>();
 	nextUriQueue.add(startUrl);
 
-	for (int i = 0; i < searchDepth; i++) {
+	for (int i = 0; i < searchDepth + 1; i++) {
 	    currentUriQueue = nextUriQueue;
 	    nextUriQueue = new LinkedBlockingQueue<String>();
 
@@ -74,7 +74,6 @@ public class Crawler {
 		    // TODO: error handling for document parsing
 		    // create local model for document parsing? easier to find
 		    // new URIs of current document?
-		    model.read(startUrl);
 		    // TODO: find new URLs and add them to this.nextUriQueue
 		}
 	    }
