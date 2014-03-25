@@ -1,6 +1,7 @@
 package ld.ldhomework.crawler;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -125,6 +126,9 @@ public class Crawler {
 	    if (entity != null) {
 		long len = entity.getContentLength();
 
+		InputStream inputStream = entity.getContent();
+		Object object = parseDocument(inputStream);
+
 		if (len > 0 && len < MAXIMUM_DOCUMENT_LENGTH) {
 		    result = EntityUtils.toString(entity);
 		} else {
@@ -148,6 +152,11 @@ public class Crawler {
 	    }
 	}
 	return result;
+    }
+
+    private Object parseDocument(InputStream inputStream) {
+	// TODO Auto-generated method stub
+	return null;
     }
 
 }
