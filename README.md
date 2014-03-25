@@ -16,7 +16,7 @@ Use wit Eclipse IDE for Java EE Developers Eclipse IDE for Java EE Developers fr
 ATTENTION:
 
 You need enabled maven2 repository for nxparser. Edit your ~/.m2/settings.xml
-
+```xml
 <settings>
 	<profiles>
 		<profile>
@@ -43,6 +43,8 @@ You need enabled maven2 repository for nxparser. Edit your ~/.m2/settings.xml
 	</activeProfiles>
 
 </settings>
+```
+
 
 Afterwards: Maven > Update Project
 
