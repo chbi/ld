@@ -30,5 +30,6 @@ public class NxparserTest {
 	    System.out.println("\t" + nxx[1].toN3());
 	    System.out.println("\t\t" + nxx[2].toN3());
 	}
+
     }
 }
