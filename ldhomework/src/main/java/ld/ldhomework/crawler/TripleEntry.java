@@ -11,7 +11,7 @@ public class TripleEntry {
     }
 
     private EntryType discoverType(String value2) {
-	
+	// TODO: add regexes here for iri and blank nodes
 	if (false) { // match Regex IRI
 	    return EntryType.IRI;
 	} else if (false) { // match Regex blank
@@ -19,8 +19,10 @@ public class TripleEntry {
 	} else { // all others
 	    return EntryType.LITERAL;
 	}
-	
-	
+    }
+
+    public String getValue() {
+	return value;
     }
 
 }
