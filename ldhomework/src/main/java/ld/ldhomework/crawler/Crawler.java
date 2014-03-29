@@ -1,22 +1,18 @@
 package ld.ldhomework.crawler;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.CharsetUtils;
 
 public class Crawler {
 
@@ -50,7 +46,7 @@ public class Crawler {
 	httpclient = HttpClients.createDefault();
     }
 
-    public void crawl() {
+    public void crawl() throws IllegalStateException {
 
 	LOG.info("startUrl = " + startUrl);
 
@@ -71,17 +67,42 @@ public class Crawler {
 		if (alreadyHandledURIs.add(currentURI)) {
 		    LOG.info("URI not handled yet. Fetching...");
 		    // TODO: FETCH document
-		    char[] responseDocument = fetchDocument(currentURI);
-		    /*
-		     * if (responseDocument != null)
-		     * System.out.println(responseDocument);
-		     */
+		    CloseableHttpResponse document = fetchDocument(currentURI);
+
 		    // TODO: error handling for document fetching
 		    // TODO: parse document
-		    // TODO: error handling for document parsing
-		    // create local model for document parsing? easier to find
-		    // new URIs of current document?
-		    // TODO: find new URLs and add them to this.nextUriQueue
+		    FileParser parser;
+		    try {
+			parser = new FileParser(document.getEntity()
+				.getContent(), currentURI);
+			parser.parse();
+
+			List<Triple> triples = parser.getTriples();
+
+			for (Triple triple : triples) {
+			    for (TripleEntry entry : triple
+				    .toTripleEntryArray()) {
+				if (entry.getType() == EntryType.IRI) {
+				    /*
+				     * found IRI
+				     */
+				    // TODO: find new URLs and add them to
+				    // this.nextUriQueue
+				    LOG.fine("found IRI:" + entry.getValue());
+				    nextUriQueue.add(entry.getValue());
+				}
+			    }
+			}
+		    } catch (IOException e) {
+			LOG.log(Level.SEVERE, "", e);
+		    } finally {
+			try {
+			    document.close();
+			} catch (IOException e) {
+			    LOG.log(Level.SEVERE, "Could not close file", e);
+			}
+		    }
+
 		} else {
 		    LOG.info("URI already fetched. Skipping.");
 		}
@@ -95,29 +116,13 @@ public class Crawler {
 	    }
 	}
 
-	// System.out.println(model.toString());
-
-	// input: Seed set S
-	// queue Frontier : = co ( S )
-	// set Visited;
-	// while Frontier not empty:
-	// pop next element from Frontier into Uri
-	// Visited : = Visited ∪ Uri
-	// HTTP GET Uri and store triples in Data
-	// output Data
-	// Links : = co ( iris ( Data ))
-	// add Links − Visited to Frontier
-
-	return;
     }
 
     // TODO: HTTP status handling...
     // TODO: throw exception if unrecoverable error
-    private char[] fetchDocument(String currentURI) {
-	char[] result = null;
+    private CloseableHttpResponse fetchDocument(String currentURI) {
 	HttpGet httpget = new HttpGet(currentURI);
 	CloseableHttpResponse response = null;
-	InputStream inputStream = null;
 	try {
 	    LOG.info("Executing GET for " + currentURI);
 	    response = httpclient.execute(httpget);
@@ -136,94 +141,22 @@ public class Crawler {
 		// TODO: throw exception, we did not get the document
 	    }
 
-	    HttpEntity entity = response.getEntity();
-	    if (entity != null) {
-		long len = entity.getContentLength();
-		if (len > MAXIMUM_DOCUMENT_LENGTH)
-		    throw new IOException(
-			    "Maximum Document size will be exceeded according to the HTTP response header. Skipping this document.");
+	    return response;
+	} catch (ClientProtocolException e) {
 
-		Header encodingHeader = entity.getContentEncoding();
-		Charset contentCharset = null;
-
-		if (encodingHeader != null) {
-		    contentCharset = CharsetUtils
-			    .get(encodingHeader.getValue());
-		} else {
-		    // HTTP 1.1 standard for undefined content charset is
-		    // ISO-8859-1
-		    contentCharset = Charset.forName("ISO-8859-1");
-		}
-
-		LOG.info("Trying to read content in charset: "
-			+ contentCharset.displayName());
-
-		inputStream = entity.getContent();
-
-		result = loadDocument(inputStream, contentCharset);
-
-	    }
-	} catch (ParseException e) {
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	} catch (IOException e) {
-	    // TODO Auto-generated catch block
+
 	    e.printStackTrace();
 	} finally {
-	    if (inputStream != null) {
-		try {
-		    inputStream.close();
-		} catch (IOException e) {
-		    // TODO Auto-generated catch block
-		    e.printStackTrace();
-		}
-	    }
-	    if (response != null) {
-		try {
-		    response.close();
-		} catch (IOException e) {
-		    // TODO Auto-generated catch block
-		    e.printStackTrace();
-		}
+	    try {
+		response.close();
+	    } catch (IOException e) {
+		LOG.warning("could not close response");
 	    }
 	}
-	return result;
-    }
 
-    private char[] loadDocument(InputStream inputStream, Charset contentCharset)
-	    throws IOException {
-	// TODO Auto-generated method stub
-	InputStreamReader isr = new InputStreamReader(inputStream,
-		contentCharset);
-	char[] buffer = new char[MAXIMUM_DOCUMENT_LENGTH];
-	boolean bufferExceeded = false;
-
-	try {
-	    int read = isr.read(buffer);
-	    if (read == MAXIMUM_DOCUMENT_LENGTH && isr.ready()) {
-		// buffer has been too small... throw exception
-		bufferExceeded = true;
-	    }
-	    isr.close();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} finally {
-	    if (isr != null) {
-		try {
-		    isr.close();
-		} catch (IOException e) {
-		    // TODO Auto-generated catch block
-		    e.printStackTrace();
-		}
-	    }
-	}
-	if (bufferExceeded) {
-	    throw new IOException(
-		    "Maximum Document size exceeded while already loading. Skipping this document.");
-	}
-
-	return buffer;
+	return response;
     }
 
 }
