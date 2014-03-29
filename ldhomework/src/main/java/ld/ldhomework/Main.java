@@ -32,9 +32,10 @@ public class Main {
 	if (args.length == 1) {
 	    crawler = new Crawler(args[0]);
 	} else {
-
-	    crawler = new Crawler(
-		    "http://www.w3.org/People/Berners-Lee/card.rdf");
+	    // use the followning construct to get an easy way to test urls from
+	    // the IDE - set startUrl to different value ;)
+	    String startUrl = "http://www.w3.org/People/Berners-Lee/card.rdf";
+	    crawler = new Crawler(startUrl);
 	}
 
 	try {

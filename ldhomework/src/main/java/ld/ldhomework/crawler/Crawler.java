@@ -21,8 +21,8 @@ public class Crawler {
 
     private static final int DEFAULT_SEARCH_DEPTH = 2;
 
-    // download only documents of maximum 10MB length
-    private static final int MAXIMUM_DOCUMENT_LENGTH = 10485760;
+    // download only documents of maximum 1MB length
+    private static final int MAXIMUM_DOCUMENT_LENGTH = 1024 * 1024;
 
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(Crawler.class.getName());
@@ -36,7 +36,6 @@ public class Crawler {
 
     public Crawler(String startUrl) {
 	this(DEFAULT_SEARCH_DEPTH, startUrl);
-	// Todo: model =
     }
 
     public Crawler(int searchDepth, String startUrl) {
@@ -69,38 +68,51 @@ public class Crawler {
 		    // TODO: FETCH document
 		    CloseableHttpResponse document = fetchDocument(currentURI);
 
-		    // TODO: error handling for document fetching
-		    // TODO: parse document
-		    FileParser parser;
-		    try {
-			parser = new FileParser(document.getEntity()
-				.getContent(), currentURI);
-			parser.parse();
+		    if (document != null
+			    && document.getEntity().getContentLength() < MAXIMUM_DOCUMENT_LENGTH) {
 
-			List<Triple> triples = parser.getTriples();
+			// TODO: error handling for document fetching
+			// TODO: parse document
+			FileParser parser;
+			try {
+			    parser = new FileParser(document.getEntity()
+				    .getContent(), currentURI);
+			    parser.parse();
 
-			for (Triple triple : triples) {
-			    for (TripleEntry entry : triple
-				    .toTripleEntryArray()) {
-				if (entry.getType() == EntryType.IRI) {
-				    /*
-				     * found IRI
-				     */
-				    // TODO: find new URLs and add them to
-				    // this.nextUriQueue
-				    LOG.fine("found IRI:" + entry.getValue());
-				    nextUriQueue.add(entry.getValue());
+			    List<Triple> triples = parser.getTriples();
+
+			    for (Triple triple : triples) {
+				for (TripleEntry entry : triple
+					.toTripleEntryArray()) {
+				    if (entry.getType() == EntryType.IRI) {
+					/*
+					 * found IRI
+					 */
+					// TODO: find new URLs and add them to
+					// this.nextUriQueue
+					LOG.fine("found IRI:"
+						+ entry.getValue());
+					nextUriQueue.add(entry.getValue());
+				    }
 				}
 			    }
+			} catch (IOException e) {
+			    LOG.log(Level.SEVERE, "", e);
+			} finally {
+			    try {
+				document.close();
+			    } catch (IOException e) {
+				LOG.log(Level.SEVERE, "Could not close file", e);
+			    }
+			}
+
+		    }
+		    try {
+			if (document != null) {
+			    document.close();
 			}
 		    } catch (IOException e) {
-			LOG.log(Level.SEVERE, "", e);
-		    } finally {
-			try {
-			    document.close();
-			} catch (IOException e) {
-			    LOG.log(Level.SEVERE, "Could not close file", e);
-			}
+			LOG.log(Level.SEVERE, "Could not close file", e);
 		    }
 
 		} else {
@@ -134,6 +146,8 @@ public class Crawler {
 	     * (probably following infinite redirects).
 	     */
 	    StatusLine statusLine = response.getStatusLine();
+	    LOG.info(currentURI + " cnttype: "
+		    + response.getEntity().getContentType());
 	    int responseStatusCode = statusLine.getStatusCode();
 	    LOG.info("Got status code " + responseStatusCode);
 
@@ -144,13 +158,17 @@ public class Crawler {
 	    return response;
 	} catch (ClientProtocolException e) {
 
-	    e.printStackTrace();
+	    LOG.severe("ClientProtocolException");
 	} catch (IOException e) {
+	    LOG.severe("IOException");
 
-	    e.printStackTrace();
+	} catch (Exception e) {
+	    LOG.log(Level.SEVERE, "can't fetch document", e);
 	} finally {
 	    try {
-		response.close();
+		if (response != null) {
+		    response.close();
+		}
 	    } catch (IOException e) {
 		LOG.warning("could not close response");
 	    }

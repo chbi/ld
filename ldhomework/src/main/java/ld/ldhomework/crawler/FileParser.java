@@ -45,7 +45,7 @@ public class FileParser {
 
 	parsed = true;
 	} catch (ParseException pe) {
-	    LOG.log(Level.SEVERE, "Error at parsing file", pe);
+	    LOG.log(Level.WARNING, "Error at parsing file", pe);
 	}
     }
 
