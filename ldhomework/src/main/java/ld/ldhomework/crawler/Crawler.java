@@ -2,6 +2,7 @@ package ld.ldhomework.crawler;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,7 +17,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.CharsetUtils;
-
 
 public class Crawler {
 
@@ -64,20 +64,33 @@ public class Crawler {
 	    while (!currentUriQueue.isEmpty()) {
 		String currentURI = currentUriQueue.poll();
 
+		LOG.info("Pop URI in currentQueue: " + currentURI);
 		// only fetch this URI if it hasn't already been fetched
 		if (alreadyHandledURIs.add(currentURI)) {
+		    LOG.info("URI not handled yet. Fetching...");
 		    // TODO: FETCH document
-		    String responseString = fetchDocument(currentURI);
+		    char[] responseDocument = fetchDocument(currentURI);
+		    /*
+		     * if (responseDocument != null)
+		     * System.out.println(responseDocument);
+		     */
 		    // TODO: error handling for document fetching
 		    // TODO: parse document
 		    // TODO: error handling for document parsing
 		    // create local model for document parsing? easier to find
 		    // new URIs of current document?
 		    // TODO: find new URLs and add them to this.nextUriQueue
+		} else {
+		    LOG.info("URI already fetched. Skipping.");
 		}
 	    }
 
 	    LOG.info("SEARCH" + i);
+
+	    if (nextUriQueue.isEmpty()) {
+		LOG.info("No more links to follow. Finishing in SEARCH " + i);
+		break;
+	    }
 	}
 
 	// System.out.println(model.toString());
@@ -98,13 +111,14 @@ public class Crawler {
 
     // TODO: HTTP status handling...
     // TODO: throw exception if unrecoverable error
-    private String fetchDocument(String currentURI) {
-	String result = null;
+    private char[] fetchDocument(String currentURI) {
+	char[] result = null;
 	CloseableHttpClient httpclient = HttpClients.createDefault();
 	HttpGet httpget = new HttpGet(currentURI);
 	CloseableHttpResponse response = null;
 	InputStream inputStream = null;
 	try {
+	    LOG.info("Executing GET for " + currentURI);
 	    response = httpclient.execute(httpget);
 
 	    /*
@@ -115,15 +129,18 @@ public class Crawler {
 	     */
 	    StatusLine statusLine = response.getStatusLine();
 	    int responseStatusCode = statusLine.getStatusCode();
+	    LOG.info("Got status code " + responseStatusCode);
 
 	    if (responseStatusCode < 200 || responseStatusCode > 299) {
 		// TODO: throw exception, we did not get the document
 	    }
 
-
 	    HttpEntity entity = response.getEntity();
 	    if (entity != null) {
 		long len = entity.getContentLength();
+		if (len > MAXIMUM_DOCUMENT_LENGTH)
+		    throw new IOException(
+			    "Maximum Document size will be exceeded according to the HTTP response header. Skipping this document.");
 
 		Header encodingHeader = entity.getContentEncoding();
 		Charset contentCharset = null;
@@ -135,8 +152,12 @@ public class Crawler {
 		    contentCharset = Charset.defaultCharset();
 		}
 
+		LOG.info("Trying to read content in charset: "
+			+ contentCharset.displayName());
+
 		inputStream = entity.getContent();
-		Object object = parseDocument(inputStream, contentCharset);
+
+		result = loadDocument(inputStream, contentCharset);
 
 	    }
 	} catch (ParseException e) {
@@ -166,9 +187,40 @@ public class Crawler {
 	return result;
     }
 
-    private Object parseDocument(InputStream inputStream, Charset contentCharset) {
+    private char[] loadDocument(InputStream inputStream, Charset contentCharset)
+	    throws IOException {
 	// TODO Auto-generated method stub
-	return null;
+	InputStreamReader isr = new InputStreamReader(inputStream,
+		contentCharset);
+	char[] buffer = new char[MAXIMUM_DOCUMENT_LENGTH];
+	boolean bufferExceeded = false;
+
+	try {
+	    int read = isr.read(buffer);
+	    if (read == MAXIMUM_DOCUMENT_LENGTH && isr.ready()) {
+		// buffer has been too small... throw exception
+		bufferExceeded = true;
+	    }
+	    isr.close();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} finally {
+	    if (isr != null) {
+		try {
+		    isr.close();
+		} catch (IOException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
+		}
+	    }
+	}
+	if (bufferExceeded) {
+	    throw new IOException(
+		    "Maximum Document size exceeded while already loading. Skipping this document.");
+	}
+
+	return buffer;
     }
 
 }
