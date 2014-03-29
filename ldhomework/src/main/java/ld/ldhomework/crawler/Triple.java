@@ -1,11 +1,13 @@
 package ld.ldhomework.crawler;
 
+import org.semanticweb.yars.nx.Node;
+
 public class Triple {
     private TripleEntry subject;
     private TripleEntry predicate;
     private TripleEntry object;
 
-    public Triple(String subject, String predicate, String object) {
+    public Triple(Node subject, Node predicate, Node object) {
 	this.subject = new TripleEntry(subject);
 	this.predicate = new TripleEntry(predicate);
 	this.object = new TripleEntry(object);
@@ -21,6 +23,11 @@ public class Triple {
 
     public TripleEntry getObject() {
 	return object;
+    }
+
+    public TripleEntry[] toTripleEntryArray() {
+	TripleEntry[] array = { subject, predicate, object };
+	return array;
     }
 
     @Override
