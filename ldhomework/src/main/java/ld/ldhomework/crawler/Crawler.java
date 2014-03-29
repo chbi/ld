@@ -150,7 +150,9 @@ public class Crawler {
 		    contentCharset = CharsetUtils
 			    .get(encodingHeader.getValue());
 		} else {
-		    contentCharset = Charset.defaultCharset();
+		    // HTTP 1.1 standard for undefined content charset is
+		    // ISO-8859-1
+		    contentCharset = Charset.forName("ISO-8859-1");
 		}
 
 		LOG.info("Trying to read content in charset: "
