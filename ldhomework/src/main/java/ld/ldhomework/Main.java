@@ -1,5 +1,8 @@
 package ld.ldhomework;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import ld.ldhomework.crawler.Crawler;
 
 /**
@@ -15,9 +18,29 @@ import ld.ldhomework.crawler.Crawler;
  * @author Christian Bitschnau
  */
 public class Main {
-	public static void main(String[] args) {
-		Crawler crawler = new Crawler(
-				"http://www.w3.org/People/Berners-Lee/card.rdf");
-		crawler.crawl();
+    private static final Logger LOG = java.util.logging.Logger
+	    .getLogger(Crawler.class.getName());
+
+    static {
+	System.setProperty("java.util.logging.SimpleFormatter.format",
+		"%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS %4$s %2$s %5$s%6$s%n");
+    }
+
+    public static void main(String[] args) {
+
+	Crawler crawler = null;
+	if (args.length == 1) {
+	    crawler = new Crawler(args[0]);
+	} else {
+
+	    crawler = new Crawler(
+		    "http://www.w3.org/People/Berners-Lee/card.rdf");
 	}
+
+	try {
+	    crawler.crawl();
+	} catch (IllegalStateException e) {
+	    LOG.log(Level.SEVERE, "IllegalState", e);
+	}
+    }
 }
