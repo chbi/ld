@@ -36,6 +36,7 @@ public class Crawler {
     private LinkedBlockingQueue<String> currentUriQueue = null;
     private LinkedBlockingQueue<String> nextUriQueue = null;
     HashSet<String> alreadyHandledURIs = null;
+    private CloseableHttpClient httpclient;
 
     public Crawler(String startUrl) {
 	this(DEFAULT_SEARCH_DEPTH, startUrl);
@@ -46,6 +47,7 @@ public class Crawler {
 	this.searchDepth = searchDepth;
 	this.startUrl = startUrl;
 	this.alreadyHandledURIs = new HashSet<String>();
+	httpclient = HttpClients.createDefault();
     }
 
     public void crawl() {
@@ -113,7 +115,6 @@ public class Crawler {
     // TODO: throw exception if unrecoverable error
     private char[] fetchDocument(String currentURI) {
 	char[] result = null;
-	CloseableHttpClient httpclient = HttpClients.createDefault();
 	HttpGet httpget = new HttpGet(currentURI);
 	CloseableHttpResponse response = null;
 	InputStream inputStream = null;
