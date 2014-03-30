@@ -44,5 +44,7 @@ public class Main {
 	} catch (IllegalStateException e) {
 	    LOG.log(Level.SEVERE, "IllegalState", e);
 	}
+
+	LOG.info("THE END");
     }
 }
