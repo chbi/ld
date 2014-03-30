@@ -1,7 +1,6 @@
 package ld.ldhomework.crawler;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 public class TripleRepository {
@@ -9,10 +8,10 @@ public class TripleRepository {
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(TripleRepository.class.getName());
 
-    private List<Triple> triples;
+    private HashSet<Triple> triples;
 
     public TripleRepository() {
-	triples = new ArrayList<Triple>();
+	triples = new HashSet<Triple>();
     }
 
     public void add(Triple t) {
