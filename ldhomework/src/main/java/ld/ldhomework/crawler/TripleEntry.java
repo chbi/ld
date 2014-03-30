@@ -9,6 +9,26 @@ import org.semanticweb.yars.nx.Resource;
 
 public class TripleEntry {
 
+    private boolean hashCodeValid = false;
+    private int hashCode = 0;
+
+    @Override
+    public int hashCode() {
+	if (hashCodeValid)
+	    return this.hashCode;
+	else {
+	    String value = this.getValue();
+	    int valueCode = 0;
+	    if (value != null) {
+		valueCode = value.hashCode();
+	    }
+	    int typeValueCode = this.getType().ordinal();
+	    this.hashCode = valueCode + typeValueCode;
+	    this.hashCodeValid = true;
+	    return this.hashCode;
+	}
+    }
+
     @Override
     public boolean equals(Object obj) {
 	boolean result = false;
@@ -83,14 +103,14 @@ public class TripleEntry {
     }
 
     public static boolean isSameTripleEntry(TripleEntry tripleEntry1,
-            TripleEntry tripleEntry2) {
-        boolean result = false;
-        if (tripleEntry1 == null && tripleEntry2 == null) {
-            result = true;
-        } else if (tripleEntry1 != null) {
-            result = tripleEntry1.equals(tripleEntry2);
-        }
-        return result;
+	    TripleEntry tripleEntry2) {
+	boolean result = false;
+	if (tripleEntry1 == null && tripleEntry2 == null) {
+	    result = true;
+	} else if (tripleEntry1 != null) {
+	    result = tripleEntry1.equals(tripleEntry2);
+	}
+	return result;
     }
 
 }
