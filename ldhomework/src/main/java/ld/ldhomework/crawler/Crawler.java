@@ -158,12 +158,17 @@ public class Crawler {
 					    // TODO: find new URLs and add them
 					    // to
 					    // this.nextUriQueue
-					    LOG.fine("found IRI:"
-						    + entry.getValue());
+					    String value = entry.getValue();
+					    LOG.fine("found IRI:" + value);
+					    int index = value.indexOf('#');
+					    String downloadURI = value;
+					    if (index != -1) {
+						downloadURI = value.substring(
+							0, index);
+					    }
 					    if (!alreadyHandledURIs
-						    .contains(entry.getValue()))
-						nextUriQueue.add(entry
-							.getValue());
+						    .contains(downloadURI))
+						nextUriQueue.add(downloadURI);
 					}
 				    }
 				}
