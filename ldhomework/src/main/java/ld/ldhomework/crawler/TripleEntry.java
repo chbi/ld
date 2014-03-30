@@ -9,6 +9,45 @@ import org.semanticweb.yars.nx.Resource;
 
 public class TripleEntry {
 
+    @Override
+    public boolean equals(Object obj) {
+	boolean result = false;
+
+	if (obj != null) {
+	    if (obj instanceof TripleEntry) {
+		TripleEntry other = (TripleEntry) obj;
+
+		// both object could be invalid tripels
+		// we do not know if this is the case, so compare everything
+		// even null values
+		boolean entryTypeMatches = false;
+		EntryType otherEntryType = other.getType();
+		if (this.getType() == null && otherEntryType == null) {
+		    entryTypeMatches = true;
+		} else if (this.getType() != null) {
+		    entryTypeMatches = this.getType().equals(otherEntryType);
+		}
+
+		if (entryTypeMatches) {
+		    boolean valueMatches = false;
+		    String value = this.getValue();
+		    String otherValue = other.getValue();
+		    if (value == null && otherValue == null) {
+			valueMatches = true;
+		    } else if (value != null) {
+			valueMatches = value.equals(otherValue);
+		    }
+
+		    // now both value and entryType could match and equals is
+		    // maybe true
+		    result = valueMatches;
+		}
+	    }
+	}
+
+	return result;
+    }
+
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(TripleEntry.class.getName());
 
