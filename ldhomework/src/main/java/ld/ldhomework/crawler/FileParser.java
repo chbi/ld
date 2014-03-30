@@ -30,7 +30,7 @@ public class FileParser {
 	this.is = is;
     }
 
-    public void parse() throws IOException {
+    public boolean parse() throws IOException {
 	try {
 	
 	nxp = new RDFXMLParser(is, baseUrl);
@@ -47,6 +47,8 @@ public class FileParser {
 	} catch (ParseException pe) {
 	    LOG.log(Level.WARNING, "Error at parsing file", pe);
 	}
+
+	return parsed;
     }
 
     public List<Triple> getTriples() {

@@ -98,30 +98,73 @@ public class Crawler {
 
 			// TODO: error handling for document fetching
 			// TODO: parse document
-			FileParser parser = null;
+			final FileParser parser;
 			InputStream stream = null;
 			try {
 			    stream = new ByteArrayInputStream(
 				    document.getBytes("UTF-8"));
 
 			    parser = new FileParser(stream, currentURI);
-			    parser.parse();
 
-			    List<Triple> triples = parser.getTriples();
+			    ExecutorService executor = Executors
+				    .newCachedThreadPool();
 
-			    for (Triple triple : triples) {
-				this.repository.add(triple);
-				for (TripleEntry entry : triple
-					.toTripleEntryArray()) {
-				    if (entry.getType() == EntryType.IRI) {
-					/*
-					 * found IRI
-					 */
-					// TODO: find new URLs and add them to
-					// this.nextUriQueue
-					LOG.fine("found IRI:"
-						+ entry.getValue());
-					nextUriQueue.add(entry.getValue());
+			    Future<Boolean> future = null;
+
+			    Callable<Boolean> task = new Callable<Boolean>() {
+				public Boolean call() {
+				    Boolean result = new Boolean(false);
+				    try {
+					result = new Boolean(parser.parse());
+				    } catch (IOException e) {
+					// TODO: use an ExecutionException
+					LOG.severe("I/O Error: "
+						+ e.getMessage());
+				    }
+				    return result;
+				}
+			    };
+			    future = executor.submit(task);
+			    boolean parsed = false;
+			    try {
+				parsed = future.get(5, TimeUnit.SECONDS)
+					.booleanValue();
+			    } catch (TimeoutException ex) {
+				// handle the timeout
+
+			    } catch (InterruptedException e) {
+				// handle the interrupts
+
+			    } catch (ExecutionException e) {
+				// handle other exceptions
+
+			    } finally {
+				future.cancel(true); // may or may not desire
+						     // this
+			    }
+
+			    if (parsed) {
+
+				List<Triple> triples = parser.getTriples();
+
+				for (Triple triple : triples) {
+				    this.repository.add(triple);
+				    for (TripleEntry entry : triple
+					    .toTripleEntryArray()) {
+					if (entry.getType() == EntryType.IRI) {
+					    /*
+					     * found IRI
+					     */
+					    // TODO: find new URLs and add them
+					    // to
+					    // this.nextUriQueue
+					    LOG.fine("found IRI:"
+						    + entry.getValue());
+					    if (!alreadyHandledURIs
+						    .contains(entry.getValue()))
+						nextUriQueue.add(entry
+							.getValue());
+					}
 				    }
 				}
 			    }
