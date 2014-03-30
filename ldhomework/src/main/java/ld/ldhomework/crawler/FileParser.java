@@ -23,8 +23,6 @@ public class FileParser {
     private InputStream is;
     private String baseUrl;
 
-    private String contentType;
-
     public FileParser(InputStream is, String baseUrl) {
 	this(is, baseUrl, null);
     }
@@ -33,16 +31,13 @@ public class FileParser {
 	triples = new ArrayList<Triple>();
 	this.baseUrl = baseUrl;
 	this.is = is;
-	this.contentType = contentType;
     }
 
     public void parse() throws IOException {
-	if (contentType.equals("text/turtle")) {
-	    parseNx();
-	}
-
-	if (contentType.equals("text/xml")) {
+	if (true) {
 	    parseXml();
+	} else if (false) {
+	    parseNx();
 	}
     }
 
