@@ -53,7 +53,7 @@ public class Triple {
 	boolean result = false;
 	TripleEntry ourObject = this.getObject();
 
-	result = isSameTripleEntry(ourObject, otherObject);
+	result = TripleEntry.isSameTripleEntry(ourObject, otherObject);
 
 	return result;
     }
@@ -62,7 +62,7 @@ public class Triple {
 	boolean result = false;
 	TripleEntry ourPredicate = this.getPredicate();
 
-	result = isSameTripleEntry(ourPredicate, otherPredicate);
+	result = TripleEntry.isSameTripleEntry(ourPredicate, otherPredicate);
 
 	return result;
     }
@@ -71,19 +71,8 @@ public class Triple {
 	boolean result = false;
 	TripleEntry ourSubject = this.getSubject();
 
-	result = isSameTripleEntry(ourSubject, otherSubject);
+	result = TripleEntry.isSameTripleEntry(ourSubject, otherSubject);
 
-	return result;
-    }
-
-    private boolean isSameTripleEntry(TripleEntry tripleEntry1,
-	    TripleEntry tripleEntry2) {
-	boolean result = false;
-	if (tripleEntry1 == null && tripleEntry2 == null) {
-	    result = true;
-	} else if (tripleEntry1 != null) {
-	    result = tripleEntry1.equals(tripleEntry2);
-	}
 	return result;
     }
 

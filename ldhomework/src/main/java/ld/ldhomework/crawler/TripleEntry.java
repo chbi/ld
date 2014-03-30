@@ -82,4 +82,15 @@ public class TripleEntry {
 	return type;
     }
 
+    public static boolean isSameTripleEntry(TripleEntry tripleEntry1,
+            TripleEntry tripleEntry2) {
+        boolean result = false;
+        if (tripleEntry1 == null && tripleEntry2 == null) {
+            result = true;
+        } else if (tripleEntry1 != null) {
+            result = tripleEntry1.equals(tripleEntry2);
+        }
+        return result;
+    }
+
 }
