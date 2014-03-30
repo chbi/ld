@@ -191,4 +191,12 @@ public class Crawler {
 	return response;
     }
 
+    public String printTriples() {
+	String result = "ERROR: No triples in repository!";
+	if (this.repository != null) {
+	    result = this.repository.toString();
+	}
+	return result;
+    }
+
 }

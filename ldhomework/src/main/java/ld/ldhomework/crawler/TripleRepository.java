@@ -5,6 +5,16 @@ import java.util.logging.Logger;
 
 public class TripleRepository {
 
+    @Override
+    public String toString() {
+	StringBuilder builder = new StringBuilder(triples.size() * 256);
+	for (Triple triple : triples) {
+	    builder.append(triple.toString());
+	    builder.append('\n');
+	}
+	return builder.toString();
+    }
+
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(TripleRepository.class.getName());
 
