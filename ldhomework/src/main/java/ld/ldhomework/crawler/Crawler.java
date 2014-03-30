@@ -9,6 +9,8 @@ import java.util.logging.Logger;
 
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -26,6 +28,8 @@ public class Crawler {
 
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(Crawler.class.getName());
+    private static final int SOCKET_TIMEOUT = 5000;
+    private static final int CONNECT_TIMEOUT = 5000;
 
     // choosing Linked Blocking Queue even if this code will not support
     // multithreading
@@ -137,6 +141,13 @@ public class Crawler {
     // TODO: throw exception if unrecoverable error
     private CloseableHttpResponse fetchDocument(String currentURI) {
 	HttpGet httpget = new HttpGet(currentURI);
+
+	Builder configBuilder = RequestConfig.custom();
+	configBuilder.setConnectTimeout(CONNECT_TIMEOUT);
+	configBuilder.setSocketTimeout(SOCKET_TIMEOUT);
+	configBuilder.setCircularRedirectsAllowed(false);
+	httpget.setConfig(configBuilder.build());
+
 	CloseableHttpResponse response = null;
 	try {
 	    LOG.info("Executing GET for " + currentURI);
