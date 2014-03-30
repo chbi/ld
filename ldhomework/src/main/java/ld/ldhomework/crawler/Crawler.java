@@ -33,6 +33,7 @@ public class Crawler {
     private LinkedBlockingQueue<String> nextUriQueue = null;
     HashSet<String> alreadyHandledURIs = null;
     private CloseableHttpClient httpclient;
+    private TripleRepository repository;
 
     public Crawler(String startUrl) {
 	this(DEFAULT_SEARCH_DEPTH, startUrl);
@@ -43,6 +44,7 @@ public class Crawler {
 	this.startUrl = startUrl;
 	this.alreadyHandledURIs = new HashSet<String>();
 	httpclient = HttpClients.createDefault();
+	repository = new TripleRepository();
     }
 
     public void crawl() throws IllegalStateException {
@@ -82,6 +84,7 @@ public class Crawler {
 			    List<Triple> triples = parser.getTriples();
 
 			    for (Triple triple : triples) {
+				this.repository.add(triple);
 				for (TripleEntry entry : triple
 					.toTripleEntryArray()) {
 				    if (entry.getType() == EntryType.IRI) {
