@@ -4,6 +4,41 @@ import org.semanticweb.yars.nx.Node;
 
 public class Triple {
 
+    private boolean hashCodeValid = false;
+    private int hashCode = 0;
+
+    @Override
+    public int hashCode() {
+	if (this.hashCodeValid) {
+	    return this.hashCode;
+	} else {
+	    int hashCodeSubject = 0;
+	    int hashCodePredicate = 0;
+	    int hashCodeObject = 0;
+
+	    TripleEntry entrySubject = this.getSubject();
+	    if (entrySubject != null) {
+		hashCodeSubject = entrySubject.hashCode() / 3;
+	    }
+
+	    TripleEntry entryPredicate = this.getPredicate();
+	    if (entryPredicate != null) {
+		hashCodePredicate = entryPredicate.hashCode() / 3;
+	    }
+
+	    TripleEntry entryObject = this.getObject();
+	    if (entryObject != null) {
+		hashCodeObject = entryObject.hashCode() / 3;
+	    }
+
+	    this.hashCode = hashCodeSubject + hashCodePredicate
+		    + hashCodeObject;
+	    this.hashCodeValid = true;
+
+	    return this.hashCode;
+	}
+    }
+
     private TripleEntry object;
 
     private TripleEntry predicate;
