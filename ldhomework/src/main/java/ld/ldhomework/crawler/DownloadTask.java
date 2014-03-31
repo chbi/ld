@@ -17,6 +17,7 @@ package ld.ldhomework.crawler;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,6 +31,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+/**
+ * The {@link DownloadTask} is used for downloading RDF documents while crawling
+ * the network. It implements the {@link Callable} interface so that it may be
+ * used in multithreaded setup - but the main reason for doing so is the
+ * possibility to avoid blocking I/O. Internally this class uses the Apache
+ * HTTPClient which does the actual HTTP GET operations including all redirect
+ * handling. This also means that only HTTP URIs are supported.
+ * 
+ * @author wolfi
+ * @author chb
+ * 
+ */
 public class DownloadTask implements Callable<DownloadedFile> {
 
     private String currentURI;
@@ -42,11 +55,23 @@ public class DownloadTask implements Callable<DownloadedFile> {
 	    .getLogger(DownloadTask.class.getName());
     private static final long ONE_MB = 1024 * 1024;
 
+    /**
+     * Construct a new {@link DownloadTask} set for a specified uri.
+     * 
+     * @param uri
+     *            the location and protocol of the document to Download.
+     */
     public DownloadTask(String uri) {
 	this.currentURI = uri;
 	httpClient = HttpClients.createDefault();
     }
 
+    /**
+     * Execute the actual download as separate thread. Best used together with
+     * {@link Executors}. Handles mime types text/turtle and
+     * application/rdf+xml. Avoids other content types and files larger than 1
+     * MB.
+     */
     public DownloadedFile call() throws Exception {
 	DownloadedFile downloadedFile = null;
 	HttpGet httpget = new HttpGet(currentURI);
