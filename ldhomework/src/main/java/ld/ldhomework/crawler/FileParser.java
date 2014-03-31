@@ -28,6 +28,14 @@ import org.semanticweb.yars.nx.parser.NxParser;
 import org.semanticweb.yars.nx.parser.ParseException;
 import org.semanticweb.yars2.rdfxml.RDFXMLParser;
 
+/**
+ * Parses {@link InputStream}s containing text/turtle or application/rdf+xml
+ * data. Produces {@link List}s with objects of type {@link Triple}. Uses
+ * NXParser for parsing both data formats.
+ * 
+ * @author chb
+ * 
+ */
 public class FileParser implements Callable<List<Triple>> {
 
     private static final Logger LOG = java.util.logging.Logger
@@ -46,6 +54,10 @@ public class FileParser implements Callable<List<Triple>> {
 	this.contentType = contentType;
     }
 
+    /**
+     * Decide according to the mime type of the input stream which kind of RDF
+     * should be parsed and delegates the parsing process to NXParser.
+     */
     public void parse() { // TODO: add the right contentTypes here!
 	if (contentType.contains("application/rdf+xml")) {
 	    parseXML();
