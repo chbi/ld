@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.semanticweb.yars.nx.Node;
-import org.semanticweb.yars.nx.parser.NxParser;
 import org.semanticweb.yars.nx.parser.ParseException;
 import org.semanticweb.yars2.rdfxml.RDFXMLParser;
 
@@ -17,6 +16,7 @@ public class FileParser {
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(TripleEntry.class.getName());
 
+    private RDFXMLParser nxp;
     private List<Triple> triples;
 
     private boolean parsed = false;
@@ -24,54 +24,30 @@ public class FileParser {
     private String baseUrl;
 
     public FileParser(InputStream is, String baseUrl) {
-	this(is, baseUrl, null);
-    }
-
-    public FileParser(InputStream is, String baseUrl, String contentType) {
 	triples = new ArrayList<Triple>();
 	this.baseUrl = baseUrl;
 	this.is = is;
     }
 
-    public void parse() throws IOException {
-	if (true) {
-	    parseXml();
-	} else if (false) {
-	    parseNx();
-	}
-    }
-
-    private void parseNx() {
-	NxParser nxp = new NxParser(is);
-	nxp = new NxParser(is);
-
-	Node[] nxx;
-	while (nxp.hasNext()) {
-	    nxx = nxp.next();
-	    triples.add(new Triple(nxx[0], nxx[1], nxx[2]));
-	}
-	parsed = true;
-
-    }
-
-    private void parseXml() {
-	RDFXMLParser nxp;
+    public boolean parse() throws IOException {
 	try {
 
 	    nxp = new RDFXMLParser(is, baseUrl);
 
 	    Node[] nxx;
 	    while (nxp.hasNext()) {
+
 		nxx = nxp.next();
+
 		triples.add(new Triple(nxx[0], nxx[1], nxx[2]));
 	    }
 
 	    parsed = true;
 	} catch (ParseException pe) {
 	    LOG.log(Level.WARNING, "Error at parsing file", pe);
-	} catch (IOException e) {
-	    LOG.log(Level.WARNING, "Error at parsing file", e);
 	}
+
+	return parsed;
     }
 
     public List<Triple> getTriples() {
