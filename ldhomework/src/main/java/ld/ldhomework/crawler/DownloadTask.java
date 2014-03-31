@@ -20,12 +20,12 @@ public class DownloadTask implements Callable<DownloadedFile> {
     private String currentURI;
     private CloseableHttpClient httpClient;
 
-
     private static final int SOCKET_TIMEOUT = 5000;
     private static final int CONNECT_TIMEOUT = 5000;
 
     private static final Logger LOG = java.util.logging.Logger
 	    .getLogger(DownloadTask.class.getName());
+    private static final long ONE_MB = 1024 * 1024;
 
     public DownloadTask(String uri) {
 	this.currentURI = uri;
@@ -55,6 +55,7 @@ public class DownloadTask implements Callable<DownloadedFile> {
 	     */
 	    StatusLine statusLine = response.getStatusLine();
 	    HttpEntity entity = response.getEntity();
+
 	    LOG.info(currentURI + " cnttype: " + entity.getContentType());
 	    int responseStatusCode = statusLine.getStatusCode();
 	    LOG.info("Got status code " + responseStatusCode);
@@ -63,8 +64,17 @@ public class DownloadTask implements Callable<DownloadedFile> {
 		// TODO: throw exception, we did not get the document
 	    }
 
-	    downloadedFile = new DownloadedFile(entity.getContent(), entity
-		    .getContentType().getValue());
+	    if (entity.getContentLength() > ONE_MB
+		    || entity.getContentType().getValue()
+			    .contains("application/rdf+xml")
+		    || entity.getContentType().getValue().contains("text/n3")
+		    || entity.getContentType().getValue()
+			    .contains("text/turtle")) {
+
+		downloadedFile = new DownloadedFile(entity.getContent(), entity
+			.getContentType().getValue());
+
+	    }
 
 	} catch (ClientProtocolException e) {
 
@@ -87,5 +97,4 @@ public class DownloadTask implements Callable<DownloadedFile> {
 	return downloadedFile;
 
     }
-
 }
