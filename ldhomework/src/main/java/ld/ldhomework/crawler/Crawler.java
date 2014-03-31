@@ -1,20 +1,40 @@
 package ld.ldhomework.crawler;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.Args;
+import org.apache.http.util.CharArrayBuffer;
 
 public class Crawler {
 
@@ -72,54 +92,102 @@ public class Crawler {
 		if (alreadyHandledURIs.add(currentURI)) {
 		    LOG.info("URI not handled yet. Fetching...");
 		    // TODO: FETCH document
-		    CloseableHttpResponse document = fetchDocument(currentURI);
+		    String document = fetchDocument(currentURI);
 
-		    if (document != null
-			    && document.getEntity().getContentLength() < MAXIMUM_DOCUMENT_LENGTH) {
+		    if (document != null) {
 
 			// TODO: error handling for document fetching
 			// TODO: parse document
-			FileParser parser;
+			final FileParser parser;
+			InputStream stream = null;
 			try {
-			    parser = new FileParser(document.getEntity()
-				    .getContent(), currentURI);
-			    parser.parse();
+			    stream = new ByteArrayInputStream(
+				    document.getBytes("UTF-8"));
 
-			    List<Triple> triples = parser.getTriples();
+			    parser = new FileParser(stream, currentURI);
 
-			    for (Triple triple : triples) {
-				this.repository.add(triple);
-				for (TripleEntry entry : triple
-					.toTripleEntryArray()) {
-				    if (entry.getType() == EntryType.IRI) {
-					/*
-					 * found IRI
-					 */
-					// TODO: find new URLs and add them to
-					// this.nextUriQueue
-					LOG.fine("found IRI:"
-						+ entry.getValue());
-					nextUriQueue.add(entry.getValue());
+			    ExecutorService executor = Executors
+				    .newCachedThreadPool();
+
+			    Future<Boolean> future = null;
+
+			    Callable<Boolean> task = new Callable<Boolean>() {
+				public Boolean call() {
+				    Boolean result = new Boolean(false);
+				    try {
+					result = new Boolean(parser.parse());
+				    } catch (IOException e) {
+					// TODO: use an ExecutionException
+					LOG.severe("I/O Error: "
+						+ e.getMessage());
+				    }
+				    return result;
+				}
+			    };
+			    future = executor.submit(task);
+			    boolean parsed = false;
+			    try {
+				parsed = future.get(5, TimeUnit.SECONDS)
+					.booleanValue();
+			    } catch (TimeoutException ex) {
+				// handle the timeout
+
+			    } catch (InterruptedException e) {
+				// handle the interrupts
+
+			    } catch (ExecutionException e) {
+				// handle other exceptions
+
+			    } finally {
+				future.cancel(true); // may or may not desire
+						     // this
+			    }
+
+			    if (parsed) {
+
+				List<Triple> triples = parser.getTriples();
+
+				for (Triple triple : triples) {
+				    this.repository.add(triple);
+				    for (TripleEntry entry : triple
+					    .toTripleEntryArray()) {
+					if (entry.getType() == EntryType.IRI) {
+					    /*
+					     * found IRI
+					     */
+					    // TODO: find new URLs and add them
+					    // to
+					    // this.nextUriQueue
+					    String value = entry.getValue();
+					    LOG.fine("found IRI:" + value);
+					    int index = value.indexOf('#');
+					    String downloadURI = value;
+					    if (index != -1) {
+						downloadURI = value.substring(
+							0, index);
+					    }
+					    if (!alreadyHandledURIs
+						    .contains(downloadURI))
+						nextUriQueue.add(downloadURI);
+					}
 				    }
 				}
 			    }
+			} catch (UnsupportedEncodingException e) {
+			    // TODO Auto-generated catch block
+			    e.printStackTrace();
 			} catch (IOException e) {
-			    LOG.log(Level.SEVERE, "", e);
+			    // TODO Auto-generated catch block
+			    e.printStackTrace();
 			} finally {
-			    try {
-				document.close();
-			    } catch (IOException e) {
-				LOG.log(Level.SEVERE, "Could not close file", e);
+			    if (stream != null) {
+				try {
+				    stream.close();
+				} catch (IOException e) {
+				    LOG.severe("Error closing internal stream!");
+				}
 			    }
 			}
-
-		    }
-		    try {
-			if (document != null) {
-			    document.close();
-			}
-		    } catch (IOException e) {
-			LOG.log(Level.SEVERE, "Could not close file", e);
 		    }
 
 		} else {
@@ -139,7 +207,8 @@ public class Crawler {
 
     // TODO: HTTP status handling...
     // TODO: throw exception if unrecoverable error
-    private CloseableHttpResponse fetchDocument(String currentURI) {
+    private String fetchDocument(String currentURI) {
+	String result = null;
 	HttpGet httpget = new HttpGet(currentURI);
 
 	Builder configBuilder = RequestConfig.custom();
@@ -169,7 +238,9 @@ public class Crawler {
 		// TODO: throw exception, we did not get the document
 	    }
 
-	    return response;
+	    result = consumeToString(response.getEntity(), (Charset) null);
+
+	    return result;
 	} catch (ClientProtocolException e) {
 
 	    LOG.severe("ClientProtocolException");
@@ -188,7 +259,7 @@ public class Crawler {
 	    }
 	}
 
-	return response;
+	return result;
     }
 
     public String printTriples() {
@@ -197,6 +268,106 @@ public class Crawler {
 	    result = this.repository.toString();
 	}
 	return result;
+    }
+
+    /**
+     * Get the entity content as a String, using the provided default character
+     * set if none is found in the entity. If defaultCharset is null, the
+     * default "ISO-8859-1" is used.
+     * 
+     * @param entity
+     *            must not be null
+     * @param defaultCharset
+     *            character set to be applied if none found in the entity
+     * @return the entity content as a String. May be null if
+     *         {@link HttpEntity#getContent()} is null.
+     * @throws ParseException
+     *             if header elements cannot be parsed
+     * @throws IllegalArgumentException
+     *             if entity is null or if content length > Integer.MAX_VALUE
+     * @throws IOException
+     *             if an error occurs reading the input stream
+     * @throws UnsupportedCharsetException
+     *             Thrown when the named charset is not available in this
+     *             instance of the Java virtual machine
+     */
+    public static String consumeToString(final HttpEntity entity,
+	    final Charset defaultCharset) throws IOException, ParseException {
+	Args.notNull(entity, "Entity");
+	final InputStream instream = entity.getContent();
+	if (instream == null) {
+	    return null;
+	}
+	try {
+	    Args.check(entity.getContentLength() <= Integer.MAX_VALUE,
+		    "HTTP entity too large to be buffered in memory");
+	    int assumedContentLength = (int) entity.getContentLength();
+	    if (assumedContentLength < 0) {
+		assumedContentLength = 4096;
+	    }
+	    Charset charset = null;
+	    try {
+		final ContentType contentType = ContentType.get(entity);
+		if (contentType != null) {
+		    charset = contentType.getCharset();
+		}
+	    } catch (final UnsupportedCharsetException ex) {
+		throw new UnsupportedEncodingException(ex.getMessage());
+	    }
+	    if (charset == null) {
+		charset = defaultCharset;
+	    }
+	    if (charset == null) {
+		charset = HTTP.DEF_CONTENT_CHARSET;
+	    }
+	    final Reader reader = new InputStreamReader(instream, charset);
+	    final CharArrayBuffer buffer = new CharArrayBuffer(
+		    assumedContentLength);
+	    final char[] tmp = new char[1024];
+	    int l = 0;
+	    ExecutorService executor = Executors.newCachedThreadPool();
+
+	    Future<Integer> future = null;
+	    while (l != -1) {
+
+		Callable<Integer> task = new Callable<Integer>() {
+		    public Integer call() {
+			Integer result = new Integer(-1);
+			try {
+			    result = new Integer(reader.read(tmp));
+			} catch (IOException e) {
+			    // TODO: use an ExecutionException
+			    LOG.severe("I/O Error: " + e.getMessage());
+			}
+			return result;
+		    }
+		};
+		future = executor.submit(task);
+		try {
+		    l = future.get(5, TimeUnit.SECONDS).intValue();
+		    if (l != -1)
+			buffer.append(tmp, 0, l);
+		} catch (TimeoutException ex) {
+		    // handle the timeout
+		    l = -1;
+		    throw new IOException("HTTP connection too slow. Aborting.");
+		} catch (InterruptedException e) {
+		    // handle the interrupts
+		    l = -1;
+		    throw new IOException("HTTP connection too slow. Aborting.");
+		} catch (ExecutionException e) {
+		    // handle other exceptions
+		    l = -1;
+		    throw new IOException(
+			    "Something gone wrong while downloading. Aborting.");
+		} finally {
+		    future.cancel(true); // may or may not desire this
+		}
+	    }
+	    return buffer.toString();
+	} finally {
+	    instream.close();
+	}
     }
 
 }

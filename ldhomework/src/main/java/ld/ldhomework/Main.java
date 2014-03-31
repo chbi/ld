@@ -41,6 +41,7 @@ public class Main {
 	try {
 	    crawler.crawl();
 	    String result = crawler.printTriples();
+	    System.out.println(result);
 	} catch (IllegalStateException e) {
 	    LOG.log(Level.SEVERE, "IllegalState", e);
 	}
