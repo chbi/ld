@@ -32,10 +32,9 @@ public class FileParser implements Callable<List<Triple>> {
     }
 
     public void parse() { // TODO: add the right contentTypes here!
-	if (contentType.contains("turtle")) {
+	if (contentType.contains(("text/turtle"))) {
 	    parseN3();
-	}
-	if (contentType.contains("xml")) {
+	} else if (contentType.contains(("application/rdf+xml"))) {
 	    parseXML();
 	}
     }
