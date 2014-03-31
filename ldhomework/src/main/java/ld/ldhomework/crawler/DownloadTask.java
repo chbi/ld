@@ -62,10 +62,8 @@ public class DownloadTask implements Callable<DownloadedFile> {
 	    LOG.info("Got status code " + responseStatusCode);
 
 	    if (responseStatusCode < 200 || responseStatusCode > 299) {
-		// TODO: throw exception, we did not get the document
-	    }
-
-	    if (entity.getContentLength() > ONE_MB
+		LOG.info("Skipping document because got no 2xx (maybe even after being redirected)");
+	    } else if (entity.getContentLength() > ONE_MB
 		    || entity.getContentType().getValue()
 			    .contains("application/rdf+xml")
 		    || entity.getContentType().getValue().contains("text/n3")
