@@ -105,7 +105,10 @@ public class Crawler {
 						    index);
 					}
 					if (!alreadyHandledURIs
-						.contains(downloadURI))
+						.contains(downloadURI)
+						&& (downloadURI
+							.startsWith("http://") || downloadURI
+							.startsWith("https://")))
 					    nextUriQueue.add(downloadURI);
 				    }
 				}
