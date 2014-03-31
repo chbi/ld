@@ -32,19 +32,32 @@ public class FileParser implements Callable<List<Triple>> {
     }
 
     public void parse() { // TODO: add the right contentTypes here!
+<<<<<<< Upstream, based on origin/master
 	if (contentType.contains(("text/turtle"))) {
 	    parseN3();
 	} else if (contentType.contains(("application/rdf+xml"))) {
+=======
+	if (contentType.contains("application/rdf+xml")) {
+>>>>>>> 7e5f0b9 content type
 	    parseXML();
+	} else if (contentType.contains("text/n3")) {
+	    parseN3();
+	} else if (contentType.contains("text/turtle")) {
+	    parseN3();
 	}
     }
 
     private void parseN3() {
-	NxParser nxp = new NxParser(is);
-	Node[] nxx;
-	while (nxp.hasNext()) {
-	    nxx = nxp.next();
-	    triples.add(new Triple(nxx[0], nxx[1], nxx[2]));
+	try {
+	    NxParser nxp = new NxParser(is);
+	    Node[] nxx;
+	    while (nxp.hasNext()) {
+		nxx = nxp.next();
+		triples.add(new Triple(nxx[0], nxx[1], nxx[2]));
+	    }
+	} catch (Throwable e) {
+	    LOG.severe("parsing error");
+	    LOG.severe(contentType);
 	}
     }
 
