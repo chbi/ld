@@ -25,6 +25,22 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+/**
+ * This class does Linked Data crawling. Setup with an initial URI it crawls the
+ * networrk breadth-first until the specified search depth has been reached. All
+ * triples are stored in an in-memory {@link TripleRepository}. The downloading
+ * and parsing are handled by a number of concurrent threads with low timeouts
+ * (for demonstration purposes). Downloads are very restricted in size too. For
+ * details on the download process itself, see {@link DownloadTask}. For details
+ * on the parsing process, see {@link FileParser}.
+ * 
+ * The main method to call is {@link Crawler#crawl()}. Result can the be
+ * obtained as a String by calling {@link Crawler#printTriples()}.
+ * 
+ * @author worohregger
+ * @author chb
+ * 
+ */
 public class Crawler {
 
     private static final int NUMBER_OF_DOWNLOAD_THREADS = 10;
@@ -49,10 +65,25 @@ public class Crawler {
     private ExecutorService parserExecutors = Executors
 	    .newFixedThreadPool(NUMBER_OF_DOWNLOAD_THREADS);
 
+    /**
+     * Construct a crawler with the specified start URL.
+     * 
+     * @param startUrl
+     *            Start the crawling with the document at this location.
+     */
     public Crawler(String startUrl) {
 	this(DEFAULT_SEARCH_DEPTH, startUrl);
     }
 
+    /**
+     * Construct a crawler with the specified start URL. Set another search
+     * depth.
+     * 
+     * @param searchDepth
+     *            Use a custom search depth.
+     * @param startUrl
+     *            Start the crawling with the document at this location.
+     */
     public Crawler(int searchDepth, String startUrl) {
 	this.searchDepth = searchDepth;
 	this.startUrl = startUrl;
@@ -62,6 +93,11 @@ public class Crawler {
 
     }
 
+    /**
+     * Start the crawling. May take a long time.
+     * 
+     * @throws IllegalStateException
+     */
     public void crawl() throws IllegalStateException {
 
 	LOG.info("startUrl = " + startUrl);
@@ -154,6 +190,12 @@ public class Crawler {
 
     }
 
+    /**
+     * Print the triples obtained while crawling the network.
+     * 
+     * @return A String containing all unique triples obtained while crawling
+     *         the network.
+     */
     public String printTriples() {
 	String result = "ERROR: No triples in repository!";
 	if (this.repository != null) {
