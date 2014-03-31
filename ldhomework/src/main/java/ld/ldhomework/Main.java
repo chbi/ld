@@ -27,7 +27,7 @@ import ld.ldhomework.crawler.Crawler;
  * 
  * Used frameworks:
  * 
- * http://code.google.com/p/nxparser or http://jena.apache.org/
+ * http://code.google.com/p/nxparser
  * 
  * Submit by e-mail not later than 2014-03-31.
  * 
@@ -43,7 +43,6 @@ public class Main {
     }
 
     public static void main(String[] args) {
-
 
 	Crawler crawler = null;
 	if (args.length == 1) {
