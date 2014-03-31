@@ -41,6 +41,7 @@ public class DownloadTask implements Callable<DownloadedFile> {
 	configBuilder.setSocketTimeout(SOCKET_TIMEOUT);
 	configBuilder.setCircularRedirectsAllowed(false);
 	httpget.setConfig(configBuilder.build());
+	httpget.addHeader("Accept", "text/turtle,application/rdf+xml");
 
 	CloseableHttpResponse response = null;
 	try {
