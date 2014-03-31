@@ -28,6 +28,7 @@ public class Main {
 
     public static void main(String[] args) {
 
+
 	Crawler crawler = null;
 	if (args.length == 1) {
 	    crawler = new Crawler(args[0]);
